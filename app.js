@@ -683,7 +683,7 @@ function showGameOver() {
 
 // Play again
 document.getElementById('new-game-btn').addEventListener('click', () => {
-    // Reset scores
+    // Reset everything and go back to setup
     gameState.players.forEach(p => {
         p.score = 0;
         p.skipsLeft = 1;
@@ -691,12 +691,13 @@ document.getElementById('new-game-btn').addEventListener('click', () => {
     gameState.currentRound = 1;
     gameState.currentPlayerIndex = 0;
     gameState.usedTopics = [];
+    gameState.theme = '';
     
-    // Shuffle players
-    gameState.players.sort(() => Math.random() - 0.5);
+    // Clear theme input field
+    document.getElementById('theme-setting').value = '';
     
-    // Back to game
-    showGameScreen();
+    // Back to setup screen
+    showScreen('setup-screen');
 });
 
 // ============================================================================
