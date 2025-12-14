@@ -84,6 +84,11 @@
                     <p class="turn-label">Your turn!</p>
                 </div>
 
+                <!-- Countdown Display (hidden initially) -->
+                <div id="countdown-container" class="countdown-container hidden">
+                    <div id="countdown-display" class="countdown-display">3</div>
+                </div>
+
                 <!-- Timer Display (hidden initially) -->
                 <div id="timer-container" class="timer-container hidden">
                     <div id="timer-display" class="timer-display">60</div>
@@ -93,6 +98,12 @@
                 <div id="topic-container" class="topic-container hidden">
                     <div class="category-badge" id="category-badge">🎬 MOVIE</div>
                     <div class="topic-text" id="topic-text">Home Alone</div>
+                </div>
+
+                <!-- Peek Button (hidden initially) -->
+                <div id="peek-section" class="action-section hidden">
+                    <button id="peek-btn" class="btn btn-peek">👁️ HOLD TO PEEK</button>
+                    <p style="text-align: center; font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">Press and hold to see the topic</p>
                 </div>
 
                 <!-- Action Buttons -->
