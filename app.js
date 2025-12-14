@@ -4,7 +4,7 @@
 
 const CONFIG = {
     // Replace this with YOUR n8n webhook URL
-    N8N_WEBHOOK_URL: 'https://dundeefounders.app.n8n.cloud/webhook/charades-topic'
+    N8N_WEBHOOK_URL: 'https://dundeefounders.app.n8n.cloud/webhook-test/charades-topic'
     // Example: 'https://your-n8n-instance.app.n8n.cloud/webhook/charades-topic'
 };
 
@@ -235,10 +235,9 @@ document.getElementById('start-turn-btn').addEventListener('click', async () => 
             document.getElementById('category-badge').textContent = `${topic.emoji} ${topic.category}`;
             document.getElementById('topic-text').textContent = topic.topic;
             
-            // Show topic and actions
+            // Show topic first (so actor can see it)
             hideElement('loading');
             showElement('topic-container');
-            showElement('turn-actions-section');
             
             // Update skip button
             const player = gameState.players[gameState.currentPlayerIndex];
@@ -251,8 +250,11 @@ document.getElementById('start-turn-btn').addEventListener('click', async () => 
                 skipBtn.disabled = true;
             }
             
-            // Start timer
-            startTimer();
+            // Start countdown after showing topic
+            setTimeout(() => {
+                startCountdown();
+            }, 2000); // Give actor 2 seconds to read the topic
+            
         } else {
             // Fallback if API fails
             hideElement('loading');
@@ -425,8 +427,43 @@ function useFallbackTopic() {
     }
     
     showElement('topic-container');
-    showElement('turn-actions-section');
-    startTimer();
+    
+    // Start countdown after showing topic
+    setTimeout(() => {
+        startCountdown();
+    }, 2000); // Give actor 2 seconds to read the topic
+}
+
+// Countdown before starting timer
+function startCountdown() {
+    showElement('countdown-container');
+    const display = document.getElementById('countdown-display');
+    
+    let count = 3;
+    display.textContent = count;
+    
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            display.textContent = count;
+            // Restart animation
+            display.style.animation = 'none';
+            setTimeout(() => { display.style.animation = ''; }, 10);
+        } else if (count === 0) {
+            display.textContent = 'GO!';
+            display.style.animation = 'none';
+            setTimeout(() => { display.style.animation = ''; }, 10);
+        } else {
+            clearInterval(countdownInterval);
+            hideElement('countdown-container');
+            
+            // Hide topic, show timer, peek button, and action buttons
+            hideElement('topic-container');
+            showElement('peek-section');
+            showElement('turn-actions-section');
+            startTimer();
+        }
+    }, 1000);
 }
 
 // Timer
@@ -463,6 +500,32 @@ function stopTimer() {
     }
 }
 
+// Peek button - hold to reveal topic
+const peekBtn = document.getElementById('peek-btn');
+
+// Support both mouse and touch events
+peekBtn.addEventListener('mousedown', () => {
+    showElement('topic-container');
+});
+
+peekBtn.addEventListener('mouseup', () => {
+    hideElement('topic-container');
+});
+
+peekBtn.addEventListener('mouseleave', () => {
+    hideElement('topic-container');
+});
+
+peekBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Prevent default touch behavior
+    showElement('topic-container');
+});
+
+peekBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    hideElement('topic-container');
+});
+
 // Skip button
 document.getElementById('skip-btn').addEventListener('click', async () => {
     const player = gameState.players[gameState.currentPlayerIndex];
@@ -475,6 +538,7 @@ document.getElementById('skip-btn').addEventListener('click', async () => {
         hideElement('topic-container');
         hideElement('turn-actions-section');
         hideElement('timer-container');
+        hideElement('peek-section');
         showElement('loading');
         
         try {
@@ -489,14 +553,16 @@ document.getElementById('skip-btn').addEventListener('click', async () => {
                 
                 hideElement('loading');
                 showElement('topic-container');
-                showElement('turn-actions-section');
                 
                 // Update skip button
                 document.getElementById('skip-text').textContent = player.skipsLeft > 0 ? 
                     `Skip (${player.skipsLeft} left)` : 'No skips left';
                 document.getElementById('skip-btn').disabled = player.skipsLeft === 0;
                 
-                startTimer();
+                // Start countdown
+                setTimeout(() => {
+                    startCountdown();
+                }, 2000);
             } else {
                 useFallbackTopic();
             }
@@ -511,7 +577,10 @@ document.getElementById('skip-btn').addEventListener('click', async () => {
 document.getElementById('success-btn').addEventListener('click', () => {
     stopTimer();
     
-    // Only guesser gets point (not actor)
+    // Actor gets a point
+    gameState.players[gameState.currentPlayerIndex].score++;
+    showPointsNotification();
+    
     // Show guesser selection
     hideElement('turn-actions-section');
     showGuesserSelection();
@@ -569,6 +638,8 @@ function nextTurn() {
     hideElement('turn-actions-section');
     hideElement('topic-container');
     hideElement('timer-container');
+    hideElement('peek-section');
+    hideElement('countdown-container');
     
     // Next player
     gameState.currentPlayerIndex++;
@@ -683,7 +754,7 @@ function showGameOver() {
 
 // Play again
 document.getElementById('new-game-btn').addEventListener('click', () => {
-    // Reset everything and go back to setup
+    // Reset scores
     gameState.players.forEach(p => {
         p.score = 0;
         p.skipsLeft = 1;
@@ -691,13 +762,12 @@ document.getElementById('new-game-btn').addEventListener('click', () => {
     gameState.currentRound = 1;
     gameState.currentPlayerIndex = 0;
     gameState.usedTopics = [];
-    gameState.theme = '';
     
-    // Clear theme input field
-    document.getElementById('theme-setting').value = '';
+    // Shuffle players
+    gameState.players.sort(() => Math.random() - 0.5);
     
-    // Back to setup screen
-    showScreen('setup-screen');
+    // Back to game
+    showGameScreen();
 });
 
 // ============================================================================
